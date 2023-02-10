@@ -55,10 +55,10 @@ public class Robot extends TimedRobot {
     double left = speed + turn;
     double right = speed - turn;
 
-      leftMotor1.set(0.5);
-      leftMotor2.set(0.5);
-      rightMotor.set(-0.5);
-      rightMotor2.set(-0.5);
+      leftMotor1.set(left);
+      leftMotor2.set(left);
+      rightMotor.set(-right);
+      rightMotor2.set(-right);
 
 
 
