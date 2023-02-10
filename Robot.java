@@ -26,6 +26,7 @@ public class Robot extends TimedRobot {
 
   private Joystick joy1 = new Joystick(0);
   
+  private double startTime;
 
 
   @Override
@@ -35,10 +36,35 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {}
 
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+
+    startTime = Timer.getFPGATimestamp();
+  }
 
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+
+    double time time = Timer.getFPGATimestamp();
+
+    if(time - startTime < 3){
+
+      leftMotor1.set(0.6);
+      leftMotor2.set(0.6);
+      rightMotor.set(-0.6);
+      rightMotor2.set(-0.6);
+    }
+    else{
+
+    leftMotor1.set(0);
+    leftMotor2.set(0);
+    rightMotor.set(0);
+    rightMotor2.set(0);
+
+  }
+
+
+
+  }
 
   @Override
   public void teleopInit() {}
@@ -49,8 +75,8 @@ public class Robot extends TimedRobot {
 
     //up is NEGATIVE , down is POSITIVE
     //
-    double speed = -joy1.getRawAxis(1)*0.6;    //Slows down by 60 percent
-    double turn =  joy1.getRawAxis(4)*0.3;     //Slows down by 30 percent for better controllability
+    double speed = -joy1.getRawAxis(1) * 0.6;    //Slows down by 60 percent
+    double turn =  joy1.getRawAxis(4) * 0.3;     //Slows down by 30 percent for better controllability
 
     double left = speed + turn;
     double right = speed - turn;
@@ -66,7 +92,7 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {} 
 
   @Override
   public void disabledPeriodic() {}
