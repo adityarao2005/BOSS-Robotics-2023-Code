@@ -17,6 +17,17 @@ public class Robot extends TimedRobot {
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
+
+  private Spark leftMotor1 = new Spark(0);
+  private Spark leftMotor2 = new Spark(1);
+  private Spark rightMotor1 = new Spark(2);
+  private Spark rightMotor2 = new Spark(3);
+
+
+  private Joystick joy1 = new Joystick(0);
+  
+
+
   @Override
   public void robotInit() {}
 
@@ -33,7 +44,26 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+
+
+    //up is NEGATIVE , down is POSITIVE
+    //
+    double speed = -joy1.getRawAxis(1)*0.6;    //Slows down by 60 percent
+    double turn =  joy1.getRawAxis(4)*0.3;     //Slows down by 30 percent for better controllability
+
+    double left = speed + turn;
+    double right = speed - turn;
+
+      leftMotor1.set(0.5);
+      leftMotor2.set(0.5);
+      rightMotor.set(-0.5);
+      rightMotor2.set(-0.5);
+
+
+
+
+  }
 
   @Override
   public void disabledInit() {}
