@@ -35,7 +35,6 @@ public class ClawSubsystem extends SubsystemBase {
 
   public static final Integer ARBITARY_CLAW_ENCODER_DISTANCE = 90;
 
-
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
@@ -45,35 +44,33 @@ public class ClawSubsystem extends SubsystemBase {
 
     if (current == null)
       return;
-    
+
     int openFactor = current instanceof OpenClawCommand ? 1 : -1;
-    
+
     if (inProcess) {
 
+      double angle = leftClaw.getEncoder().getPosition();
 
-        double angle = leftClaw.getEncoder().getPosition();
+      if (angle < ARBITARY_CLAW_ENCODER_DISTANCE) {
+        leftClaw.set(openFactor * 1);
+        rightClaw.set(openFactor * 1);
+      } else {
+        inProcess = false;
+        leftClaw.set(0);
+        rightClaw.set(0);
 
-        if (angle < ARBITARY_CLAW_ENCODER_DISTANCE) {
-          leftClaw.set(openFactor * 1);
-          rightClaw.set(openFactor * 1);
-        } else {
-          inProcess = false;
-          leftClaw.set(0);
-          rightClaw.set(0);
+        leftClaw.getEncoder().setPosition(0);
 
-          leftClaw.getEncoder().setPosition(0);
-          
-          current = null;
-        }
+        current = null;
+      }
 
     } else {
       inProcess = true;
 
-
       double angle = leftClaw.getEncoder().getPosition();
 
-       leftClaw.set(openFactor * 1);
-       rightClaw.set(openFactor * 1);
+      leftClaw.set(openFactor * 1);
+      rightClaw.set(openFactor * 1);
 
     }
   }
@@ -105,7 +102,7 @@ public class ClawSubsystem extends SubsystemBase {
     rightClaw.set(0);
     // This method will be called once per scheduler run during simulation
     leftClaw.set(-1.0);
-    
+
     while (leftClaw.getEncoder().getPosition() > 0) {
 
     }
@@ -113,7 +110,7 @@ public class ClawSubsystem extends SubsystemBase {
     leftClaw.set(0);
 
     rightClaw.set(-1.0);
-    
+
     while (rightClaw.getEncoder().getPosition() > 0) {
 
     }

@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj.Timer;
 //import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import frc.robot.commands.DriveCommand;
+
 public class Robot extends TimedRobot {
 
   // declare speed controlls for gyroscope
@@ -30,14 +32,7 @@ public class Robot extends TimedRobot {
   // Inputs
   AnalogGyro gyro = new AnalogGyro(0); // ANA Ch. 0
 
-  Spark m_frontLeft = new Spark(1);
-  Spark m_rearLeft = new Spark(2);
-  MotorControllerGroup m_left = new MotorControllerGroup(m_frontLeft, m_rearLeft);
-
-  Spark m_frontRight = new Spark(3);
-  Spark m_rearRight = new Spark(4);
-  MotorControllerGroup m_right = new MotorControllerGroup(m_frontRight, m_rearRight);
-  DifferentialDrive m_drive = new DifferentialDrive(m_left, m_right);
+  DriveCommand driveCom = new DriveCommand();
 
   public void robotInit() {
     m_left.setInverted(true); // if you want to invert the entire side you can do so here
@@ -91,12 +86,9 @@ public class Robot extends TimedRobot {
 
 @Override
 public void autonomousPeriodic() {
-    // Drives forward at half speed until the robot has moved 5 feet, then stops:
-    if(encoder.getDistance() < 5) {
-        drive.tankDrive(0.5, 0.5);
-    } else {
-        drive.tankDrive(0, 0);
-    }
+
+  //Move to the ball first
+  moveToBall();
   
   
   //Sample Code for gyroscope to balance the robot
