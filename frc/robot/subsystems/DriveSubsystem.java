@@ -17,7 +17,7 @@ public class DriveSubsystem {
     //Configure drive encoder
     private Encoder wheelEncoder = new Encoder(0, 1, false, Encoder.EncodingType.k2X);
 
-    private final double WHEEL_DIAMETER = 0;   //Measure in cm so that the robot distance is recorded in cm
+    private final double WHEEL_DIAMETER = 6 * 2.54;   //Measure in cm so that the robot distance is recorded in cm
     private double distancePerPulse = (double) 1/2048 * WHEEL_DIAMETER * Math.PI;
 
     public Drive() {
