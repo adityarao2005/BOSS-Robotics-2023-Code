@@ -5,3 +5,7 @@ https://docs.wpilib.org/en/stable/docs/software/wpilib-tools/robotbuilder/writin
 
 Example code for autonomous period:
 https://github.com/SeanSun6814/FRC0ToAutonomous
+
+Code from a team last year:
+https://github.com/team4015/FRC4015-2020
+
