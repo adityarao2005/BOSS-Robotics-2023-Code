@@ -12,13 +12,19 @@ import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.DriverStation;
 //import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.motorcontrol.Victor;
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -30,10 +36,15 @@ public class Robot extends TimedRobot {
    * Autonomous selection options.
    */
   private static final String kNothingAuto = "do nothing";
+
   private static final String kConeAuto = "cone";
   private static final String kCubeAuto = "cube";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
+
+  boolean autoBalanceXMode;
+
+  AHRS ahrs;
 
   // speed controlls for gyroscope in autonomous mode
   double leftSlow = 0.24;
@@ -74,8 +85,8 @@ public class Robot extends TimedRobot {
    * The arm is a NEO on Everybud.
    * The intake is a NEO 550 on Everybud.
    */
-  // CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushed);
-  // CANSparkMax intake = new CANSparkMax(6, MotorType.kBrushed);
+  CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushed);
+  CANSparkMax intake = new CANSparkMax(6, MotorType.kBrushed);
 
   /**
    * The starter code uses the most generic joystick class.
@@ -87,7 +98,30 @@ public class Robot extends TimedRobot {
    * that you feel is more comfortable.
    */
   Joystick j = new Joystick(0);
+{
+  try {
+    /***********************************************************************
+     * navX-MXP:
+     * - Communication via RoboRIO MXP (SPI, I2C, TTL UART) and USB.            
+     * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
+     * 
+     * navX-Micro:
+     * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
+     * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
+     * 
+     * Multiple navX-model devices on a single robot are supported.
+     ************************************************************************/
+          ahrs = new AHRS(SPI.Port.kMXP); 
+      } catch (RuntimeException ex ) {
+          DriverStation.reportError("Error instantiating navX MXP:  " + ex.getMessage(), true);
+      }
+  }
 
+
+  MotorControllerGroup leftSide = new MotorControllerGroup(driveLeftVictor , driveLeftSpark);
+  MotorControllerGroup rightSide = new MotorControllerGroup(driveRightVictor , driveRightSpark);
+
+  DifferentialDrive drive = new DifferentialDrive(leftSide, rightSide);
   /*
    * Magic numbers. Use these to adjust settings.
    */
@@ -179,11 +213,11 @@ public class Robot extends TimedRobot {
      * If either one is reversed, change that here too. Arm out is defined
      * as positive, arm in is negative.
      */
-    // arm.setInverted(true);
-    // arm.setIdleMode(IdleMode.kBrake);
-    // arm.setSmartCurrentLimit(ARM_CURRENT_LIMIT_A);
-    // intake.setInverted(false);
-    // intake.setIdleMode(IdleMode.kBrake);
+    arm.setInverted(true);
+    arm.setIdleMode(IdleMode.kBrake);
+    arm.setSmartCurrentLimit(ARM_CURRENT_LIMIT_A);
+    intake.setInverted(false);
+    intake.setIdleMode(IdleMode.kBrake);
   }
 
 
@@ -210,31 +244,8 @@ public class Robot extends TimedRobot {
                                                                                                                                                                                                                                                                                                                 
     // see note above in robotInit about commenting these out one by one to set
     // directions.
-    driveLeftSpark.set(right);
-    //driveLeftVictor.set(left);
-    driveRightSpark.set(left);
-    //driveRightVictor.set(right);
-  }
 
-  public void setDriveMotorsTest(double forward, double turn) {
-    SmartDashboard.putNumber("drive forward power (%)", forward);
-    SmartDashboard.putNumber("drive turn power (%)", turn);
-
-    /*
-     * positive turn = counter clockwise, so the left side goes backwards
-     */
-    double left = forward - turn;
-    double right = forward + turn;
-
-    SmartDashboard.putNumber("drive left power (%)", left);
-    SmartDashboard.putNumber("drive right power (%)", right);
-                                                                                                                                                                                                                                                                                                                
-    // see note above in robotInit about commenting these out one by one to set
-    // directions.
-    driveLeftSpark.set(right);
-    //driveLeftVictor.set(left);
-    driveRightSpark.set(left);
-    //driveRightVictor.set(right);
+    drive.tankDrive(forward, turn);
   }
 
   /**
@@ -243,11 +254,11 @@ public class Robot extends TimedRobot {
    * @param percent
    */
   public void setArmMotor(double percent) {
-    // arm.set(percent);
-    // SmartDashboard.putNumber("arm power (%)", percent);
-    // SmartDashboard.putNumber("arm motor current (amps)", arm.getOutputCurrent());
-    // SmartDashboard.putNumber("arm motor temperature (C)",
-    // arm.getMotorTemperature());
+    arm.set(percent);
+    SmartDashboard.putNumber("arm power (%)", percent);
+    SmartDashboard.putNumber("arm motor current (amps)", arm.getOutputCurrent());
+    SmartDashboard.putNumber("arm motor temperature (C)",
+    arm.getMotorTemperature());
   }
 
   /**
@@ -257,13 +268,13 @@ public class Robot extends TimedRobot {
    * @param amps    current limit
    */
   public void setIntakeMotor(double percent, int amps) {
-    // intake.set(percent);
-    // intake.setSmartCurrentLimit(amps);
-    // SmartDashboard.putNumber("intake power (%)", percent);
-    // SmartDashboard.putNumber("intake motor current (amps)",
-    // intake.getOutputCurrent());
-    // SmartDashboard.putNumber("intake motor temperature (C)",
-    // intake.getMotorTemperature());
+    intake.set(percent);
+    intake.setSmartCurrentLimit(amps);
+    SmartDashboard.putNumber("intake power (%)", percent);
+    SmartDashboard.putNumber("intake motor current (amps)",
+    intake.getOutputCurrent());
+    SmartDashboard.putNumber("intake motor temperature (C)",
+    intake.getMotorTemperature());
   }
 
   /**
@@ -300,53 +311,36 @@ public class Robot extends TimedRobot {
     autonomousStartTime = Timer.getFPGATimestamp();
   }
 
+
+  
+
   @Override
   public void autonomousPeriodic() {
 
-    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
-
-    if (m_autoSelected == kNothingAuto) {
-      if(timeElapsed < AUTO_DRIVE_TIME){
-      setArmMotor(0.0);
-      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-      setDriveMotors(-1.5,0.6);   //- is right , + is left
-      }
-      else if(timeElapsed >= AUTO_DRIVE_TIME){
-       setDriveMotors(0.0, 0.0);
-      }
-      
-        
-      
-    }
 
 
-    // if (timeElapsed < ARM_EXTEND_TIME_S) {
-    //   setArmMotor(ARM_OUTPUT_POWER);
-    //   setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-    //   setDriveMotors(0.0, 0.0);
-    // } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S) {
-    //   setArmMotor(0.0);
-    //   setIntakeMotor(autonomousIntakePower, INTAKE_CURRENT_LIMIT_A);
-    //   setDriveMotors(0.0, 0.0);
-    // } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S) {
-    //   setArmMotor(-ARM_OUTPUT_POWER);
-    //   setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-    //   setDriveMotors(0.0, 0.0);
-    // } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME) {
-    //   setArmMotor(0.0);
-    //   setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-    //   setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
-    // } else {
-    //   // setArmMotor(0.0);
-    //   // setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-    //  // setDriveMotors(3.0, 0.0);
 
+    // double angle = ahrs.getAngle();
+    
+    // try {
 
-      // gyro.getAngle()));
-    //}
+    //   setDriveMotors(- angle / 360, 0);
+
+    // } catch( RuntimeException ex ) {
+    //     String err_string = "Drive system error:  " + ex.getMessage();
+    //     DriverStation.reportError(err_string, true);
+    // }
+    // Timer.delay(0.005);		// wait for a motor update time
   }
 
+  
+  
+  static final double kOffBalanceAngleThresholdDegrees = 10;
+  static final double kOonBalanceAngleThresholdDegrees  = 5;
+
+
   // Sample Code for gyroscope to balance the robot
+
   //
 
   // private void set(double d) {}
@@ -373,52 +367,69 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
 
-    // // Encoder encoder = new Encoder(0, 1);
-    // double armPower;
-    // if (j.getRawButton(7)) {
-    // // lower the arm
-    // armPower = -ARM_OUTPUT_POWER;
-    // } else if (j.getRawButton(5)) {
-    // // raise the arm
-    // armPower = ARM_OUTPUT_POWER;
-    // } else {
-    // // do nothing and let it sit where it is
-    // armPower = 0.0;
-    // }
-    // setArmMotor(armPower);
+    // Encoder encoder = new Encoder(0, 1);
+    double armPower;
+    if (j.getRawButton(5)) {
+    // lower the arm
+    armPower = -ARM_OUTPUT_POWER;
+    System.out.println("Arm lowering");
 
-    // double intakePower;
-    // int intakeAmps;
-    // if (j.getRawButton(8)) {
-    // // cube in or cone out
-    // intakePower = INTAKE_OUTPUT_POWER;
-    // intakeAmps = INTAKE_CURRENT_LIMIT_A;
-    // lastGamePiece = CUBE;
-    // } else if (j.getRawButton(6)) {
-    // // cone in or cube out
-    // intakePower = -INTAKE_OUTPUT_POWER;
-    // intakeAmps = INTAKE_CURRENT_LIMIT_A;
-    // lastGamePiece = CONE;
-    // } else if (lastGamePiece == CUBE) {
-    // intakePower = INTAKE_HOLD_POWER;
-    // intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
-    // } else if (lastGamePiece == CONE) {
-    // intakePower = -INTAKE_HOLD_POWER;
-    // intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
-    // } else {
-    // intakePower = 0.0;
-    // intakeAmps = 0;
-    // }
-    // setIntakeMotor(intakePower, intakeAmps);
+    } else if (j.getRawButton(6)) {
+    // raise the arm
+    armPower = ARM_OUTPUT_POWER;
+    System.out.println("Arm Raising");
+    } else {
+    // do nothing and let it sit where it is
+    armPower = 0.0;
+    }
+    setArmMotor(armPower);
+
+    double intakePower;
+    int intakeAmps;
+    if (j.getRawAxis(2) > 0) {
+    // cube in or cone out
+    intakePower = INTAKE_OUTPUT_POWER;
+    intakeAmps = INTAKE_CURRENT_LIMIT_A;
+    lastGamePiece = CUBE;
+    System.out.println("Out take");
+    } else if (j.getRawAxis(3) > 0) {
+    // cone in or cube out
+    intakePower = -INTAKE_OUTPUT_POWER;
+    intakeAmps = INTAKE_CURRENT_LIMIT_A;
+    lastGamePiece = CONE;
+    System.out.println("In Take");
+    } else if (lastGamePiece == CUBE) {
+    intakePower = INTAKE_HOLD_POWER;
+    intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
+    } else if (lastGamePiece == CONE) {
+    intakePower = -INTAKE_HOLD_POWER;
+    intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
+    } else {
+    intakePower = 0.0;
+    intakeAmps = 0;
+    }
+    setIntakeMotor(intakePower, intakeAmps);
 
     /*  ;
+    
+
      * Negative signs here because the values from the analog sticks are backwards
      * from what we want. Forward returns a negative when we want it positive.
      */
-    setDriveMotorsTest(j.getRawAxis(1), -j.getRawAxis(4));
+
+     double x = j.getRawAxis(1);
+     double y= j.getRawAxis(4);
+    if(Math.abs(x) < 0.05 ){
+      x = 0;
+    }
+    if(Math.abs(y) < 0.05 ){
+      y = 0;
+    }
+    setDriveMotors(x * 0.25, -y * 0.25);
 
     // encoder.close();
 
+    
    
   }
 }
