@@ -15,14 +15,14 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.AnalogGyro;
+//import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.DriverStation;
 //import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
+//import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.motorcontrol.Victor;
@@ -51,12 +51,12 @@ public class Robot extends TimedRobot {
   double rightSlow = -0.24;
   double rotateSpeed = 0.35;
   double rotateSpeedSlow = 0.25;
- // double rightFast = -1.1;
+  // double rightFast = -1.1;
 
   // Encoder declaration
   // Encoder encoder = new Encoder(0, 1);
   // Inputs
-  AnalogGyro gyro = new AnalogGyro(0); // ANA Ch. 0
+  // AnalogGyro gyro = new AnalogGyro(0); // ANA Ch. 0
 
   /*
    * Drive motor controller instances.
@@ -67,8 +67,8 @@ public class Robot extends TimedRobot {
    */
   CANSparkMax driveLeftSpark = new CANSparkMax(1, MotorType.kBrushed);
   CANSparkMax driveRightSpark = new CANSparkMax(2, MotorType.kBrushed);
-  VictorSP driveLeftVictor = new VictorSP(0);
-  VictorSP driveRightVictor = new VictorSP(1);
+  VictorSP driveLeftVictor = new VictorSP(1);
+  VictorSP driveRightVictor = new VictorSP(0);
 
   // MotorControllerGroup leftMotors = new MotorControllerGroup(driveLeftSpark,
   // driveLeftVictor);
@@ -98,30 +98,29 @@ public class Robot extends TimedRobot {
    * that you feel is more comfortable.
    */
   Joystick j = new Joystick(0);
-{
-  try {
-    /***********************************************************************
-     * navX-MXP:
-     * - Communication via RoboRIO MXP (SPI, I2C, TTL UART) and USB.            
-     * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
-     * 
-     * navX-Micro:
-     * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
-     * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
-     * 
-     * Multiple navX-model devices on a single robot are supported.
-     ************************************************************************/
-          ahrs = new AHRS(SPI.Port.kMXP); 
-      } catch (RuntimeException ex ) {
-          DriverStation.reportError("Error instantiating navX MXP:  " + ex.getMessage(), true);
-      }
+  {
+    try {
+      /***********************************************************************
+       * navX-MXP:
+       * - Communication via RoboRIO MXP (SPI, I2C, TTL UART) and USB.
+       * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
+       * 
+       * navX-Micro:
+       * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
+       * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
+       * 
+       * Multiple navX-model devices on a single robot are supported.
+       ************************************************************************/
+      ahrs = new AHRS(SPI.Port.kMXP);
+    } catch (RuntimeException ex) {
+      DriverStation.reportError("Error instantiating navX MXP:  " + ex.getMessage(), true);
+    }
   }
 
+  MotorControllerGroup leftSide;
+  MotorControllerGroup rightSide;
 
-  MotorControllerGroup leftSide = new MotorControllerGroup(driveLeftVictor , driveLeftSpark);
-  MotorControllerGroup rightSide = new MotorControllerGroup(driveRightVictor , driveRightSpark);
-
-  DifferentialDrive drive = new DifferentialDrive(leftSide, rightSide);
+  DifferentialDrive drive;
   /*
    * Magic numbers. Use these to adjust settings.
    */
@@ -129,18 +128,18 @@ public class Robot extends TimedRobot {
   /**
    * How many amps the arm motor can use.
    */
-  static final int ARM_CURRENT_LIMIT_A = 20;
+  static final int ARM_CURRENT_LIMIT_A = 40;
 
   /**
    * \
    * Percent output to run the arm up/down at
    */
-  static final double ARM_OUTPUT_POWER = 0.4;
+  static final double ARM_OUTPUT_POWER = 3;
 
   /**
    * How many amps the intake can use while picking up
    */
-  static final int INTAKE_CURRENT_LIMIT_A = 25;
+  static final int INTAKE_CURRENT_LIMIT_A = 40;
 
   /**
    * How many amps the intake can use while holding
@@ -150,7 +149,7 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for intaking
    */
-  static final double INTAKE_OUTPUT_POWER = 1.0;
+  static final double INTAKE_OUTPUT_POWER = 0.5;
 
   /**
    * Percent output for holding
@@ -174,18 +173,17 @@ public class Robot extends TimedRobot {
    */
   static final double AUTO_DRIVE_TIME = 3.0;
 
-  
-
   /**
    * Speed to drive backwards in auto
    */
-  static final double AUTO_DRIVE_SPEED = -0.25;
+  static final double AUTO_DRIVE_SPEED = -2;
 
   /**
    * This method is run once when the robot is first started up.
    */
   @Override
   public void robotInit() {
+
     m_chooser.setDefaultOption("do nothing", kNothingAuto);
     m_chooser.addOption("cone and mobility", kConeAuto);
     m_chooser.addOption("cube and mobility", kCubeAuto);
@@ -193,7 +191,7 @@ public class Robot extends TimedRobot {
 
     // encoder.setDistancePerPulse(1. / 256.);
 
-    //gyro.reset();
+    // gyro.reset();
 
     /*
      * You will need to change some of these from false to true.
@@ -202,24 +200,34 @@ public class Robot extends TimedRobot {
      * to the set() methods. Push the joystick forward. Reverse the motor
      * if it is going the wrong way. Repeat for the other 3 motors.
      */
-    driveLeftSpark.setInverted(false);
-    driveLeftVictor.setInverted(false);
+    driveLeftSpark.setInverted(true);
+    driveLeftSpark.setIdleMode(IdleMode.kCoast);
+    driveLeftVictor.setInverted(true);
     driveRightSpark.setInverted(true);
-    driveRightVictor.setInverted(true);
+    driveRightSpark.setIdleMode(IdleMode.kCoast);
+    driveRightVictor.setInverted(false);
 
+    leftSide = new MotorControllerGroup(driveLeftSpark, driveLeftVictor);
+    rightSide = new MotorControllerGroup(driveRightSpark, driveRightVictor);
+    drive = new DifferentialDrive(leftSide, rightSide);
+
+
+
+    
     /*
      * m
      * Set the arm and intake to brake mode to help hold position.
      * If either one is reversed, change that here too. Arm out is defined
      * as positive, arm in is negative.
      */
+    arm.restoreFactoryDefaults();
     arm.setInverted(true);
     arm.setIdleMode(IdleMode.kBrake);
     arm.setSmartCurrentLimit(ARM_CURRENT_LIMIT_A);
+    intake.restoreFactoryDefaults();
     intake.setInverted(false);
     intake.setIdleMode(IdleMode.kBrake);
   }
-
 
   /**
    * Calculate and set the power to apply to the left and right
@@ -241,11 +249,12 @@ public class Robot extends TimedRobot {
 
     SmartDashboard.putNumber("drive left power (%)", left);
     SmartDashboard.putNumber("drive right power (%)", right);
-                                                                                                                                                                                                                                                                                                                
+
     // see note above in robotInit about commenting these out one by one to set
     // directions.
 
-    drive.tankDrive(forward, turn);
+    drive.tankDrive(left, right);
+    // drive.arcadeDrive(forward, turn);
   }
 
   /**
@@ -254,11 +263,11 @@ public class Robot extends TimedRobot {
    * @param percent
    */
   public void setArmMotor(double percent) {
-    arm.set(percent);
+    arm.setVoltage(percent);
     SmartDashboard.putNumber("arm power (%)", percent);
     SmartDashboard.putNumber("arm motor current (amps)", arm.getOutputCurrent());
     SmartDashboard.putNumber("arm motor temperature (C)",
-    arm.getMotorTemperature());
+        arm.getMotorTemperature());
   }
 
   /**
@@ -272,9 +281,9 @@ public class Robot extends TimedRobot {
     intake.setSmartCurrentLimit(amps);
     SmartDashboard.putNumber("intake power (%)", percent);
     SmartDashboard.putNumber("intake motor current (amps)",
-    intake.getOutputCurrent());
+        intake.getOutputCurrent());
     SmartDashboard.putNumber("intake motor temperature (C)",
-    intake.getMotorTemperature());
+        intake.getMotorTemperature());
   }
 
   /**
@@ -284,7 +293,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     SmartDashboard.putNumber("Time (seconds)", Timer.getFPGATimestamp());
-    SmartDashboard.putNumber("Gyro angle:", Math.round(gyro.getAngle()));
+    // SmartDashboard.putNumber("Gyro angle:", Math.round(gyro.getAngle()));
 
   }
 
@@ -309,35 +318,26 @@ public class Robot extends TimedRobot {
     }
 
     autonomousStartTime = Timer.getFPGATimestamp();
-  }
+  } 
 
-
-  
+  boolean foundChargingStation = false;
 
   @Override
   public void autonomousPeriodic() {
 
-
-
-
-    // double angle = ahrs.getAngle();
     
-    // try {
-
-    //   setDriveMotors(- angle / 360, 0);
-
-    // } catch( RuntimeException ex ) {
-    //     String err_string = "Drive system error:  " + ex.getMessage();
-    //     DriverStation.reportError(err_string, true);
+    // if (Timer.getFPGATimestamp() - autonomousStartTime <= 3) {
+    //   setDriveMotors(-0.7, 0);
+    // } else {
+    //   setDriveMotors(0, 0);
     // }
-    // Timer.delay(0.005);		// wait for a motor update time
+
+    // 
+
   }
 
-  
-  
   static final double kOffBalanceAngleThresholdDegrees = 10;
-  static final double kOonBalanceAngleThresholdDegrees  = 5;
-
+  static final double kOonBalanceAngleThresholdDegrees = 5;
 
   // Sample Code for gyroscope to balance the robot
 
@@ -370,66 +370,65 @@ public class Robot extends TimedRobot {
     // Encoder encoder = new Encoder(0, 1);
     double armPower;
     if (j.getRawButton(5)) {
-    // lower the arm
-    armPower = -ARM_OUTPUT_POWER;
-    System.out.println("Arm lowering");
+      // lower the arm
+      armPower = -ARM_OUTPUT_POWER;
+      System.out.println("Arm lowering");
 
     } else if (j.getRawButton(6)) {
-    // raise the arm
-    armPower = ARM_OUTPUT_POWER;
-    System.out.println("Arm Raising");
+      // raise the arm
+      armPower = ARM_OUTPUT_POWER;
+      System.out.println("Arm Raising");
     } else {
-    // do nothing and let it sit where it is
-    armPower = 0.0;
+      // do nothing and let it sit where it is
+      armPower = 0.0;
     }
     setArmMotor(armPower);
 
     double intakePower;
     int intakeAmps;
     if (j.getRawAxis(2) > 0) {
-    // cube in or cone out
-    intakePower = INTAKE_OUTPUT_POWER;
-    intakeAmps = INTAKE_CURRENT_LIMIT_A;
-    lastGamePiece = CUBE;
-    System.out.println("Out take");
+      // cube in or cone out
+      intakePower = INTAKE_OUTPUT_POWER;
+      intakeAmps = INTAKE_CURRENT_LIMIT_A;
+      lastGamePiece = CUBE;
+      System.out.println("Out take");
     } else if (j.getRawAxis(3) > 0) {
-    // cone in or cube out
-    intakePower = -INTAKE_OUTPUT_POWER;
-    intakeAmps = INTAKE_CURRENT_LIMIT_A;
-    lastGamePiece = CONE;
-    System.out.println("In Take");
+      // cone in or cube out
+      intakePower = -INTAKE_OUTPUT_POWER;
+      intakeAmps = INTAKE_CURRENT_LIMIT_A;
+      lastGamePiece = CONE;
+      System.out.println("In Take");
     } else if (lastGamePiece == CUBE) {
-    intakePower = INTAKE_HOLD_POWER;
-    intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
+      intakePower = INTAKE_HOLD_POWER;
+      intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
     } else if (lastGamePiece == CONE) {
-    intakePower = -INTAKE_HOLD_POWER;
-    intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
+      intakePower = -INTAKE_HOLD_POWER;
+      intakeAmps = INTAKE_HOLD_CURRENT_LIMIT_A;
     } else {
-    intakePower = 0.0;
-    intakeAmps = 0;
+      intakePower = 0.0;
+      intakeAmps = 0;
     }
     setIntakeMotor(intakePower, intakeAmps);
 
-    /*  ;
-    
-
+    /*
+     * ;
+     * 
+     * 
      * Negative signs here because the values from the analog sticks are backwards
      * from what we want. Forward returns a negative when we want it positive.
      */
 
-     double x = j.getRawAxis(1);
-     double y= j.getRawAxis(4);
-    if(Math.abs(x) < 0.05 ){
+    double x = j.getRawAxis(1);
+    double y = j.getRawAxis(4);
+    if (Math.abs(x) < 0.05) {
       x = 0;
     }
-    if(Math.abs(y) < 0.05 ){
+    if (Math.abs(y) < 0.05) {
       y = 0;
     }
-    setDriveMotors(x * 0.25, -y * 0.25);
+    setDriveMotors(x, y);
 
     // encoder.close();
 
-    
-   
   }
 }
