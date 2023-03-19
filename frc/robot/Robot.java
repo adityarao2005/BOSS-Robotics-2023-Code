@@ -2,6 +2,10 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+
+//To comment out a block of code:
+// select the block of code and press "ctrl + /"
+
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -326,7 +330,7 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
 
     
-    // if (Timer.getFPGATimestamp() - autonomousStartTime <= 3) {
+    // if (Timer.getFPGATimestamp() - autonomousStartTime <= 4) {
     //   setDriveMotors(-0.7, 0);
     // } else {
     //   setDriveMotors(0, 0);
@@ -336,11 +340,42 @@ public class Robot extends TimedRobot {
 
   }
 
-  static final double kOffBalanceAngleThresholdDegrees = 10;
-  static final double kOonBalanceAngleThresholdDegrees = 5;
-
   // Sample Code for gyroscope to balance the robot
 
+  
+
+  public void autoGyro() {
+    if (Timer.getFPGATimestamp() - autonomousStartTime < 0.25) {
+      return;
+    }
+
+    if (!foundChargingStation) {
+      
+      setDriveMotors(-0.7, 0);
+
+      double angle = ahrs.getPitch();
+
+      if (Math.abs(angle) > 3) {
+        foundChargingStation = true;
+
+        autonomousStartTime = Timer.getFPGATimestamp();
+      }
+
+    } else {
+
+      double angle = ahrs.getPitch();
+
+      if (angle > 3) {
+        setDriveMotors(-0.5, 0);
+      } else if (angle < -3) {
+        setDriveMotors(0.5, 0);
+      } else {
+        setDriveMotors(0, 0);
+      }
+    }
+
+
+  }
   //
 
   // private void set(double d) {}
