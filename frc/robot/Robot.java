@@ -336,13 +336,14 @@ public class Robot extends TimedRobot {
     //   setDriveMotors(0, 0);
     // }
 
+    autoGyro();
+
     // 
 
   }
 
   // Sample Code for gyroscope to balance the robot
-
-  
+  final int DEGREES_THRESHOLD = 6;
 
   public void autoGyro() {
     if (Timer.getFPGATimestamp() - autonomousStartTime < 0.25) {
@@ -355,7 +356,7 @@ public class Robot extends TimedRobot {
 
       double angle = ahrs.getPitch();
 
-      if (Math.abs(angle) > 3) {
+      if (Math.abs(angle) > DEGREES_THRESHOLD) {
         foundChargingStation = true;
 
         autonomousStartTime = Timer.getFPGATimestamp();
@@ -365,10 +366,10 @@ public class Robot extends TimedRobot {
 
       double angle = ahrs.getPitch();
 
-      if (angle > 3) {
-        setDriveMotors(-0.5, 0);
-      } else if (angle < -3) {
-        setDriveMotors(0.5, 0);
+      if (angle > DEGREES_THRESHOLD) {
+        setDriveMotors(-0.11, 0);
+      } else if (angle < -DEGREES_THRESHOLD) {
+        setDriveMotors(0.11, 0);
       } else {
         setDriveMotors(0, 0);
       }
